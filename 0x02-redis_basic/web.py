@@ -1,30 +1,32 @@
 #!/usr/bin/env python3
-"""Defines get_page function"""
-
+""" Web Cache & Redis """
 import redis
 import requests
 from functools import wraps
 from typing import Callable
 
-redis_client = redis.Redis()
+
+redis_store = redis.Redis()
+""" Redis Store """
 
 
-def count_cache(method: Callable) -> Callable:
-    """Counts how many times a particular URL was accessed"""
+def data_cacher(method: Callable) -> Callable:
+    """ Data Cacher """
     @wraps(method)
-    def wrapper(url):
-        """Wrapper function for the decorated method."""
-        redis_client.incr(f"count:{url}")
-
+    def invoker(url) -> str:
+        """ Invoker """
+        redis_store.incr(f'count:{url}')
+        result = redis_store.get(f'result:{url}')
+        if result:
+            return result.decode('utf-8')
         result = method(url)
-        redis_client.setex(f"result:{url}", 10, result)
-
+        redis_store.set(f'count:{url}', 0)
+        redis_store.setex(f'result:{url}', 10, result)
         return result
+    return invoker
 
-    return wrapper
 
-
-@count_cache
+@data_cacher
 def get_page(url: str) -> str:
-    """Returns HTML of a URL"""
+    """ Get Page """
     return requests.get(url).text
