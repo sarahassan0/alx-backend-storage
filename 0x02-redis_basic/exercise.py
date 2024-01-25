@@ -16,7 +16,7 @@ class Cache:
 
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """method that takes a data argument and returns a string"""
-        key = uuid.uuid4().hex
+        key: str = str(uuid.uuid4())
         self._redis.set(key, data)
         return key
 
