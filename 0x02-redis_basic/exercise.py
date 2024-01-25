@@ -66,6 +66,8 @@ class Cache:
         self._redis = redis.Redis(host='localhost', port=6379, db=0)
         self._redis.flushdb()
 
+    @call_history
+    @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """Method that takes a data argument and returns a string"""
         key: str = str(uuid.uuid4())
