@@ -59,6 +59,7 @@ def replay(fn: Callable) -> None:
     for input, output in zip(inputs_list, outputs_list):
         print(f"{method_name}(*{input.decode('utf-8')}) -> {output}")
 
+
 class Cache:
     """A Cache class that stores data in Redis."""
 
