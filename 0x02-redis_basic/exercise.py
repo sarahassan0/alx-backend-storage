@@ -15,26 +15,27 @@ class Cache:
         self._redis.flushdb()
 
     def store(self, data: Union[str, bytes, int, float]) -> str:
-        """method that takes a data argument and returns a string"""
+        """Method that takes a data argument and returns a string"""
         key: str = str(uuid.uuid4())
         self._redis.set(key, data)
         return key
 
-    def get(self, key: str, fn: Optional[Callable] = None) -> Union[str, bytes, int, float]:
-        """convert the data back to the desired format"""
+    def get(
+        self, key: str, fn: Union[Callable, None] = None
+    ) -> Union[str, bytes, int, float]:
+        """Get value and pass it to the callable"""
+        value = self._redis.get(key)
 
-        data = self._redis.get(key)
-        if fn:
-            return fn(data) if data else None
-        else:
-            return data
+        if fn is not None:
+            return fn(value)
 
-    def get_str(self, key: str):
-        """automatically parametrize Cache.get
-        with the correct conversion function"""
-        return self._redis.get(key, lambda x: x.decode("utf-8"))
+        return value
+
+    def get_str(self, key: str) -> str:
+        """Parametrize method for getting a string from the cache"""
+        return self.get(key, lambda x: x.decode("utf-8"))
 
     def get_int(self, key: str):
-        """automatically parametrize Cache.get
+        """Automatically parametrize Cache.get
         with the correct conversion function"""
         return self._redis.get(key, int)
