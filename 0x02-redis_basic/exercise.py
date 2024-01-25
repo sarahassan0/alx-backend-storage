@@ -38,10 +38,31 @@ def call_history(method: Callable) -> Callable:
 
     return wrapper
 
+
+def replay(fn: Callable) -> None:
+    """Display the history of calls of a particular function."""
+    redis_obj = getattr(fn.__self__, '_redis', None)
+    if not isinstance(redis_obj, redis.Redis):
+        return
+
+    method_name = fn.__qualname__
+    inputs_name = method_name + ':inputs'
+    outputs_name = method_name + ':outputs'
+
+    inputs_list = redis_obj.lrange(inputs_name, 0, -1)
+    outputs_list = redis_obj.lrange(outputs_name, 0, -1)
+
+    counts = redis_obj.get(method_name).decode('utf-8')
+
+    print(f"{method_name} was called {counts} times:")
+
+    for input, output in zip(inputs_list, outputs_list):
+        print(f"{method_name}(*{input.decode('utf-8')}) -> {output}")
+
 class Cache:
     """A Cache class that stores data in Redis."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._redis = redis.Redis(host='localhost', port=6379, db=0)
         self._redis.flushdb()
 
@@ -66,7 +87,7 @@ class Cache:
         """Parametrize method for getting a string from the cache"""
         return self.get(key, lambda x: x.decode("utf-8"))
 
-    def get_int(self, key: str):
+    def get_int(self, key: str) -> int:
         """Automatically parametrize Cache.get
         with the correct conversion function"""
-        return self._redis.get(key, int)
+        return self.get(key, int)
